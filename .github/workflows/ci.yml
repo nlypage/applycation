@@ -26,7 +26,7 @@ jobs:
         run: mise run frontend:deps
 
       - name: Lint
-        run: mise run lint
+        run: mise run backend:lint:check && mise run frontend:lint
 
       - name: Test
-        run: mise run test
+        run: mise run backend:test:check && mise run frontend:test

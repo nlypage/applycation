@@ -22,3 +22,30 @@ paths:
                     example: ok
                 required:
                   - status
+components:
+  schemas:
+    Error:
+      type: object
+      description: Base error response for API failures.
+      properties:
+        code:
+          type: string
+          example: internal_error
+        message:
+          type: string
+          example: Unexpected server error
+      required:
+        - code
+        - message
+    ValidationError:
+      allOf:
+        - $ref: "#/components/schemas/Error"
+        - type: object
+          description: Validation details for malformed input.
+          properties:
+            details:
+              type: object
+              additionalProperties:
+                type: string
+              example:
+                field: must be a valid value

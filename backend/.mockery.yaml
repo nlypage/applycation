@@ -1,0 +1,8 @@
+template: testify
+packages:
+  github.com/nlypage/applycation/backend/internal/ports/primary:
+    config:
+      all: true
+      dir: internal/testutil/mocks/primary
+      pkgname: primary
+      filename: "{{.InterfaceName | snakecase}}.go"

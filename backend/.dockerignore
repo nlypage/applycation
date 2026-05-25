@@ -1,0 +1,4 @@
+.pi-lens/
+bin/
+coverage.out
+*.log

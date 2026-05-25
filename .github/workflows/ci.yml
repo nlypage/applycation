@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  foundation-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+
+      - name: Install toolchain
+        run: mise install
+
+      - name: Backend deps
+        run: mise run backend:deps
+
+      - name: Frontend deps
+        run: mise run frontend:deps
+
+      - name: Lint
+        run: mise run lint
+
+      - name: Test
+        run: mise run test

@@ -1,0 +1,115 @@
+[tools]
+go = "1.26.0"
+node = "22.16.0"
+pnpm = "10.12.1"
+
+[env]
+PROJECT_NAME = "applycation"
+GOOSE_VERSION = "v3.24.1"
+SQLC_VERSION = "v1.30.0"
+OAPI_CODEGEN_VERSION = "v2.7.0"
+
+[tasks.setup]
+description = "Install backend/frontend dependencies"
+run = "mise run frontend:deps && mise run backend:codegen"
+
+[tasks.dev]
+description = "Run backend and frontend in separate terminals"
+run = "echo 'Run: mise run backend:dev  |  mise run frontend:dev'"
+
+[tasks.lint]
+description = "Run all linters"
+run = "mise run backend:lint && mise run frontend:lint"
+
+[tasks.test]
+description = "Run all tests"
+run = "mise run backend:test && mise run frontend:test"
+
+[tasks.codegen]
+description = "Run all code generators"
+run = "mise run backend:codegen && mise run codegen:sqlc"
+
+[tasks.migrate]
+description = "Apply database migrations"
+run = "mise run db:migrate-up"
+
+[tasks."docker:config"]
+description = "Validate Docker Compose configuration"
+run = "docker compose --env-file .env config --quiet"
+
+[tasks."docker:build"]
+description = "Build Docker Compose images"
+run = "docker compose --env-file .env build"
+
+[tasks."docker:up"]
+description = "Run Docker Compose stack"
+run = "docker compose --env-file .env up --build"
+
+[tasks."docker:down"]
+description = "Stop Docker Compose stack"
+run = "docker compose --env-file .env down"
+
+[tasks."docker:logs"]
+description = "Follow Docker Compose logs"
+run = "docker compose --env-file .env logs -f"
+
+[tasks."backend:deps"]
+description = "Download Go module dependencies"
+dir = "backend"
+run = "go mod tidy"
+
+[tasks."backend:dev"]
+description = "Run backend server"
+run = "mise run backend:codegen && cd backend && go run ./cmd/server"
+
+[tasks."backend:lint"]
+description = "Lint backend"
+run = "mise run backend:codegen && cd backend && go vet ./..."
+
+[tasks."backend:test"]
+description = "Run backend tests"
+run = "mise run backend:codegen && cd backend && go test ./..."
+
+[tasks."frontend:deps"]
+description = "Install frontend dependencies"
+dir = "frontend"
+run = "pnpm install"
+
+[tasks."frontend:dev"]
+description = "Run frontend dev server"
+dir = "frontend"
+run = "pnpm dev"
+
+[tasks."frontend:lint"]
+description = "Lint frontend"
+dir = "frontend"
+run = "pnpm lint"
+
+[tasks."frontend:test"]
+description = "Run frontend tests"
+dir = "frontend"
+run = "pnpm test"
+
+[tasks."codegen:openapi"]
+description = "Generate OpenAPI backend code"
+run = "cd backend/internal/adapters/primary/http/openapi && go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@${OAPI_CODEGEN_VERSION} --config cfg.yaml ../../../../../../api/openapi.yaml"
+
+[tasks."backend:codegen"]
+description = "Generate backend code (openapi + mocks)"
+run = "mise run codegen:openapi && mise run codegen:mocks && mise run backend:deps"
+
+[tasks."codegen:sqlc"]
+description = "Generate sqlc queries"
+run = "if find db/queries -name '*.sql' -print -quit | grep -q .; then go run github.com/sqlc-dev/sqlc/cmd/sqlc@${SQLC_VERSION} generate -f db/sqlc.yaml; else echo 'skip sqlc codegen: db/queries has no .sql files yet'; fi"
+
+[tasks."codegen:mocks"]
+description = "Generate Go mocks with mockery"
+run = "cd backend && go run github.com/vektra/mockery/v3@v3.7.0 --config .mockery.yaml"
+
+[tasks."db:migrate-up"]
+description = "Apply DB migrations"
+run = "go run github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION} -dir db/migrations postgres \"${DATABASE_URL}\" up"
+
+[tasks."db:migrate-down"]
+description = "Rollback last DB migration"
+run = "go run github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION} -dir db/migrations postgres \"${DATABASE_URL}\" down"

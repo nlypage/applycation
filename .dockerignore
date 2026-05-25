@@ -1,0 +1,9 @@
+.git/
+frontend/node_modules/
+frontend/dist/
+frontend/.pnpm-store/
+frontend/.pi-lens/
+backend/.pi-lens/
+backend/bin/
+backend/coverage.out
+*.log

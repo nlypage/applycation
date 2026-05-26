@@ -17,6 +17,21 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    image: ghcr.io/pressly/goose:v3.24.1
+    container_name: applycation-migrate
+    env_file:
+      - .env
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations:/migrations
+    command: -dir /migrations up
+
   backend:
     build:
       context: .
@@ -33,6 +48,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   frontend:
     build:

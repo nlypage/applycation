@@ -1,14 +1,13 @@
 [tools]
 go = "1.26.0"
+mockery = "3.7.0"
 node = "22.16.0"
+oapi-codegen = "2.7.0"
 pnpm = "10.12.1"
+sqlc = "1.31.1"
 
 [env]
 PROJECT_NAME = "applycation"
-GOOSE_VERSION = "v3.24.1"
-SQLC_VERSION = "v1.30.0"
-OAPI_CODEGEN_VERSION = "v2.7.0"
-MOCKERY_VERSION = "v3.7.0"
 
 [tasks.setup]
 description = "Install backend/frontend dependencies"
@@ -29,10 +28,6 @@ run = "mise run backend:test && mise run frontend:test"
 [tasks.codegen]
 description = "Run all code generators"
 run = "mise run backend:codegen && mise run codegen:sqlc"
-
-[tasks.migrate]
-description = "Apply database migrations"
-run = "mise run db:migrate-up"
 
 [tasks."docker:config"]
 description = "Validate Docker Compose configuration"
@@ -100,7 +95,7 @@ run = "pnpm test"
 
 [tasks."codegen:openapi"]
 description = "Generate OpenAPI backend code"
-run = "cd backend/internal/adapters/primary/http/openapi && go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@${OAPI_CODEGEN_VERSION} --config cfg.yaml ../../../../../../api/openapi.yaml"
+run = "cd backend/internal/adapters/primary/http/openapi && oapi-codegen --config cfg.yaml ../../../../../../api/openapi.yaml"
 
 [tasks."backend:codegen"]
 description = "Generate backend code (openapi + mocks)"
@@ -108,16 +103,8 @@ run = "mise run codegen:openapi && mise run codegen:mocks"
 
 [tasks."codegen:sqlc"]
 description = "Generate sqlc queries"
-run = "if find db/queries -name '*.sql' -print -quit | grep -q .; then go run github.com/sqlc-dev/sqlc/cmd/sqlc@${SQLC_VERSION} generate -f db/sqlc.yaml; else echo 'skip sqlc codegen: db/queries has no .sql files yet'; fi"
+run = "if find db/queries -name '*.sql' -print -quit | grep -q .; then sqlc generate -f db/sqlc.yaml; else echo 'skip sqlc codegen: db/queries has no .sql files yet'; fi"
 
 [tasks."codegen:mocks"]
 description = "Generate Go mocks with mockery"
-run = "cd backend && go run github.com/vektra/mockery/v3@${MOCKERY_VERSION} --config .mockery.yaml"
-
-[tasks."db:migrate-up"]
-description = "Apply DB migrations"
-run = "go run github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION} -dir db/migrations postgres \"${DATABASE_URL}\" up"
-
-[tasks."db:migrate-down"]
-description = "Rollback last DB migration"
-run = "go run github.com/pressly/goose/v3/cmd/goose@${GOOSE_VERSION} -dir db/migrations postgres \"${DATABASE_URL}\" down"
+run = "cd backend && mockery --config .mockery.yaml"

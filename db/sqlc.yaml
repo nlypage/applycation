@@ -8,3 +8,6 @@ sql:
         package: "db"
         out: "../backend/internal/adapters/secondary/postgres/sqlc"
         sql_package: "pgx/v5"
+        emit_methods_with_db_argument: true
+        emit_pointers_for_null_types: true
+        emit_empty_slices: true

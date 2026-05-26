@@ -2,17 +2,6 @@
 
 Self-host платформа для поиска вакансий и автооткликов на hh.ru.
 
-## Phase 0 status
-
-Сделан foundation-слой:
-
-- базовая структура монорепозитория;
-- Docker Compose для backend/frontend/postgres;
-- единый task runner через `mise run ...`;
-- базовые backend/frontend lint/test/dev команды;
-- стартовый CI на GitHub Actions c `mise`;
-- backend перестроен под гексагональную архитектуру (adapters/primary/secondary, domain, ports, app).
-
 ## Quick start
 
 1. Создайте локальный `.env` с переменными окружения.

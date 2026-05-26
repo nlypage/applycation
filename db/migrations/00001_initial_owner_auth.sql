@@ -1,13 +1,15 @@
 -- +goose Up
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE FUNCTION applycation_set_updated_at()
+-- +goose StatementBegin
+CREATE OR REPLACE FUNCTION applycation_set_updated_at()
 RETURNS trigger AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
 CREATE TABLE owners (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

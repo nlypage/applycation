@@ -18,19 +18,22 @@ services:
       retries: 5
 
   migrate:
-    image: ghcr.io/pressly/goose:v3.24.1
+    build:
+      context: .
+      dockerfile: docker/goose/Dockerfile
     container_name: applycation-migrate
     env_file:
       - .env
     environment:
       GOOSE_DRIVER: postgres
-      GOOSE_DBSTRING: ${DATABASE_URL}
+      GOOSE_DBSTRING: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      GOOSE_MIGRATION_DIR: /migrations
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - ./db/migrations:/migrations
-    command: -dir /migrations up
+    command: up
 
   backend:
     build:
@@ -42,7 +45,7 @@ services:
       - .env
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-8080}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:

@@ -73,6 +73,14 @@ run = "mise run backend:deps && mise run backend:test:check"
 description = "Run backend tests after generated code is present"
 run = "cd backend && go test ./..."
 
+[tasks."backend:test:integration"]
+description = "Run backend integration tests with database"
+run = "mise run backend:deps && cd backend && go test ./internal/adapters/secondary/postgres/... ./internal/testutil/..."
+
+[tasks."backend:test:unit"]
+description = "Run backend unit tests only (skip integration tests)"
+run = "mise run backend:deps && cd backend && go test -short ./..."
+
 [tasks."frontend:deps"]
 description = "Install frontend dependencies"
 dir = "frontend"

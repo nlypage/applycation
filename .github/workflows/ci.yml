@@ -19,14 +19,11 @@ jobs:
       - name: Install toolchain
         run: mise install
 
-      - name: Backend deps
-        run: mise run backend:deps
-
-      - name: Frontend deps
-        run: mise run frontend:deps
+      - name: Setup project
+        run: mise run setup
 
       - name: Lint
-        run: mise run backend:lint:check && mise run frontend:lint
+        run: mise run lint
 
       - name: Test
-        run: mise run backend:test:check && mise run frontend:test
+        run: mise run test

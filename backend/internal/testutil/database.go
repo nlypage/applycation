@@ -112,7 +112,7 @@ func newTestDatabase(t *testing.T, connStr string) *TestDatabase {
 }
 
 // runMigrations applies db/migrations using goose library.
-func runMigrations(connStr string) error {
+func runMigrations(connStr string) (err error) {
 	projectRoot, err := findProjectRoot()
 	if err != nil {
 		return fmt.Errorf("find project root: %w", err)
@@ -123,7 +123,11 @@ func runMigrations(connStr string) error {
 	if err != nil {
 		return fmt.Errorf("open database connection: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("close database connection: %w", closeErr)
+		}
+	}()
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("set goose dialect: %w", err)

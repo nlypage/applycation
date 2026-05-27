@@ -6,3 +6,12 @@ packages:
       dir: internal/testutil/mocks/primary
       pkgname: primary
       filename: "{{.InterfaceName | snakecase}}.go"
+  github.com/nlypage/applycation/backend/internal/ports/secondary:
+    config:
+      dir: internal/testutil/mocks/secondary
+      pkgname: secondary
+      filename: "{{.InterfaceName | snakecase}}.go"
+    interfaces:
+      OwnerRepository:
+      PasswordHasher:
+      TxManager:

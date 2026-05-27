@@ -25,8 +25,14 @@ type LoginResult struct {
 	SessionToken string
 }
 
+// LogoutInput contains data for local owner logout.
+type LogoutInput struct {
+	SessionToken string
+}
+
 // AuthService is an inbound local authentication use-case port.
 type AuthService interface {
 	Setup(ctx context.Context, input SetupInput) (entity.Owner, error)
 	Login(ctx context.Context, input LoginInput) (LoginResult, error)
+	Logout(ctx context.Context, input LogoutInput) error
 }

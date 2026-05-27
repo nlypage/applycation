@@ -22,8 +22,9 @@ func TestAuthServiceSetupCreatesFirstOwner(t *testing.T) {
 	expectedOwner := entity.Owner{ID: "owner-1", PasswordHash: "bcrypt-hash"}
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(entity.Owner{}, secondaryports.ErrNotFound).Once()
@@ -55,7 +56,13 @@ func TestAuthServiceSetupRejectsInvalidPassword(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svc := NewAuthService(secondarymocks.NewMockOwnerRepository(t), secondarymocks.NewMockOwnerSessionRepository(t), secondarymocks.NewMockPasswordHasher(t), secondarymocks.NewMockSessionTokenGenerator(t), secondarymocks.NewMockTxManager(t))
+			svc := NewAuthService(
+				secondarymocks.NewMockOwnerRepository(t),
+				secondarymocks.NewMockOwnerSessionRepository(t),
+				secondarymocks.NewMockPasswordHasher(t),
+				secondarymocks.NewMockSessionTokenGenerator(t),
+				secondarymocks.NewMockTxManager(t),
+			)
 
 			_, err := svc.Setup(context.Background(), setupInput(tt.secret))
 			if !errors.Is(err, ErrValidation) {
@@ -71,8 +78,9 @@ func TestAuthServiceSetupReturnsAlreadyCompleted(t *testing.T) {
 	ctx := context.Background()
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(entity.Owner{ID: "existing-owner"}, nil).Once()
@@ -90,8 +98,9 @@ func TestAuthServiceSetupPropagatesRepositoryCheckError(t *testing.T) {
 	checkErr := errors.New("database unavailable")
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(entity.Owner{}, checkErr).Once()
@@ -109,8 +118,9 @@ func TestAuthServiceSetupPropagatesHashError(t *testing.T) {
 	hashErr := errors.New("hash failed")
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(entity.Owner{}, secondaryports.ErrNotFound).Once()
@@ -129,8 +139,9 @@ func TestAuthServiceSetupPropagatesCreateError(t *testing.T) {
 	createErr := errors.New("create failed")
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(entity.Owner{}, secondaryports.ErrNotFound).Once()
@@ -151,9 +162,9 @@ func TestAuthServiceLoginCreatesOwnerSession(t *testing.T) {
 	expectedSession := entity.OwnerSession{ID: "session-1", OwnerID: owner.ID, SessionTokenHash: "token-hash"}
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
 	sessions := secondarymocks.NewMockOwnerSessionRepository(t)
-	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	svc := NewAuthService(owners, sessions, hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
@@ -231,8 +242,9 @@ func TestAuthServiceLoginReturnsSetupRequired(t *testing.T) {
 	ctx := context.Background()
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(entity.Owner{}, secondaryports.ErrNotFound).Once()
@@ -250,8 +262,9 @@ func TestAuthServiceLoginReturnsAuthFailedForInvalidPassword(t *testing.T) {
 	owner := entity.Owner{ID: "owner-1", PasswordHash: "bcrypt-hash"}
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
-	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, secondarymocks.NewMockSessionTokenGenerator(t), tx)
+	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
 	owners.EXPECT().GetSingle(ctx).Return(owner, nil).Once()
@@ -271,8 +284,8 @@ func TestAuthServiceLoginPropagatesTokenGenerationError(t *testing.T) {
 	owner := entity.Owner{ID: "owner-1", PasswordHash: "bcrypt-hash"}
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
-	tx := secondarymocks.NewMockTxManager(t)
 	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
+	tx := secondarymocks.NewMockTxManager(t)
 	svc := NewAuthService(owners, secondarymocks.NewMockOwnerSessionRepository(t), hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
@@ -294,9 +307,9 @@ func TestAuthServiceLoginPropagatesCreateSessionError(t *testing.T) {
 	owner := entity.Owner{ID: "owner-1", PasswordHash: "bcrypt-hash"}
 	owners := secondarymocks.NewMockOwnerRepository(t)
 	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	tx := secondarymocks.NewMockTxManager(t)
 	sessions := secondarymocks.NewMockOwnerSessionRepository(t)
-	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
 	svc := NewAuthService(owners, sessions, hasher, tokens, tx)
 
 	expectRunInTx(t, tx, ctx)
@@ -308,6 +321,95 @@ func TestAuthServiceLoginPropagatesCreateSessionError(t *testing.T) {
 	_, err := svc.Login(ctx, loginInput(validSetupSecret))
 	if !errors.Is(err, createErr) {
 		t.Fatalf("Login() error = %v, want %v", err, createErr)
+	}
+}
+
+func TestAuthServiceLogoutRevokesOwnerSession(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
+	tx := secondarymocks.NewMockTxManager(t)
+	sessions := secondarymocks.NewMockOwnerSessionRepository(t)
+	svc := NewAuthService(secondarymocks.NewMockOwnerRepository(t), sessions, hasher, tokens, tx)
+
+	expectRunInTx(t, tx, ctx)
+	sessions.EXPECT().Revoke(ctx, hashSessionToken("raw-token")).Return(nil).Once()
+
+	err := svc.Logout(ctx, logoutInput("raw-token"))
+	if err != nil {
+		t.Fatalf("Logout() unexpected error: %v", err)
+	}
+}
+
+func TestAuthServiceLogoutRejectsMissingToken(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{name: "empty", token: ""},
+		{name: "whitespace", token: "   "},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc := NewAuthService(
+				secondarymocks.NewMockOwnerRepository(t),
+				secondarymocks.NewMockOwnerSessionRepository(t),
+				secondarymocks.NewMockPasswordHasher(t),
+				secondarymocks.NewMockSessionTokenGenerator(t),
+				secondarymocks.NewMockTxManager(t),
+			)
+
+			err := svc.Logout(context.Background(), logoutInput(tt.token))
+			if !errors.Is(err, ErrValidation) {
+				t.Fatalf("Logout() error = %v, want %v", err, ErrValidation)
+			}
+		})
+	}
+}
+
+func TestAuthServiceLogoutReturnsAuthFailedWhenSessionNotFound(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
+	tx := secondarymocks.NewMockTxManager(t)
+	sessions := secondarymocks.NewMockOwnerSessionRepository(t)
+	svc := NewAuthService(secondarymocks.NewMockOwnerRepository(t), sessions, hasher, tokens, tx)
+
+	expectRunInTx(t, tx, ctx)
+	sessions.EXPECT().Revoke(ctx, hashSessionToken("missing-token")).Return(secondaryports.ErrNotFound).Once()
+
+	err := svc.Logout(ctx, logoutInput("missing-token"))
+	if !errors.Is(err, ErrAuthFailed) {
+		t.Fatalf("Logout() error = %v, want %v", err, ErrAuthFailed)
+	}
+}
+
+func TestAuthServiceLogoutPropagatesRevokeError(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	revokeErr := errors.New("revoke failed")
+	hasher := secondarymocks.NewMockPasswordHasher(t)
+	tokens := secondarymocks.NewMockSessionTokenGenerator(t)
+	tx := secondarymocks.NewMockTxManager(t)
+	sessions := secondarymocks.NewMockOwnerSessionRepository(t)
+	svc := NewAuthService(secondarymocks.NewMockOwnerRepository(t), sessions, hasher, tokens, tx)
+
+	expectRunInTx(t, tx, ctx)
+	sessions.EXPECT().Revoke(ctx, hashSessionToken("raw-token")).Return(revokeErr).Once()
+
+	err := svc.Logout(ctx, logoutInput("raw-token"))
+	if !errors.Is(err, revokeErr) {
+		t.Fatalf("Logout() error = %v, want %v", err, revokeErr)
 	}
 }
 
@@ -323,6 +425,10 @@ func loginInput(secret string) primaryports.LoginInput {
 	}
 }
 
+func logoutInput(sessionToken string) primaryports.LogoutInput {
+	return primaryports.LogoutInput{SessionToken: sessionToken}
+}
+
 func expectRunInTx(t *testing.T, tx *secondarymocks.MockTxManager, ctx context.Context) {
 	t.Helper()
 
@@ -332,3 +438,4 @@ func expectRunInTx(t *testing.T, tx *secondarymocks.MockTxManager, ctx context.C
 		},
 	).Once()
 }
+

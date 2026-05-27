@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -132,6 +134,29 @@ func (s *AuthService) Login(ctx context.Context, input primaryports.LoginInput) 
 	return result, nil
 }
 
+func (s *AuthService) Logout(ctx context.Context, input primaryports.LogoutInput) error {
+	if err := validateLogoutInput(input); err != nil {
+		return err
+	}
+
+	tokenHash := hashSessionToken(input.SessionToken)
+	err := s.txManager.RunInTx(ctx, func(txCtx context.Context) error {
+		err := s.ownerSessions.Revoke(txCtx, tokenHash)
+		if errors.Is(err, secondaryports.ErrNotFound) {
+			return ErrAuthFailed
+		}
+		if err != nil {
+			return fmt.Errorf("revoke owner session: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func validateSetupInput(input primaryports.SetupInput) error {
 	if strings.TrimSpace(input.Password) == "" {
 		return fmt.Errorf("%w: password is required", ErrValidation)
@@ -147,6 +172,18 @@ func validateLoginInput(input primaryports.LoginInput) error {
 		return fmt.Errorf("%w: password is required", ErrValidation)
 	}
 	return nil
+}
+
+func validateLogoutInput(input primaryports.LogoutInput) error {
+	if strings.TrimSpace(input.SessionToken) == "" {
+		return fmt.Errorf("%w: session token is required", ErrValidation)
+	}
+	return nil
+}
+
+func hashSessionToken(token string) string {
+	digest := sha256.Sum256([]byte(strings.TrimSpace(token)))
+	return hex.EncodeToString(digest[:])
 }
 
 func optionalString(value string) *string {

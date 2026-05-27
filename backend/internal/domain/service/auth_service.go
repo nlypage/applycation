@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,11 +19,10 @@ const (
 
 // AuthService orchestrates local owner authentication use cases.
 type AuthService struct {
-	owners                secondaryports.OwnerRepository
-	ownerSessions         secondaryports.OwnerSessionRepository
-	passwordHasher        secondaryports.PasswordHasher
-	sessionTokenGenerator secondaryports.SessionTokenGenerator
-	txManager             secondaryports.TxManager
+	owners        secondaryports.OwnerRepository
+	ownerSessions secondaryports.OwnerSessionRepository
+	crypto        secondaryports.CryptoPort
+	txManager     secondaryports.TxManager
 }
 
 var _ primaryports.AuthService = (*AuthService)(nil)
@@ -34,16 +31,14 @@ var _ primaryports.AuthService = (*AuthService)(nil)
 func NewAuthService(
 	owners secondaryports.OwnerRepository,
 	ownerSessions secondaryports.OwnerSessionRepository,
-	passwordHasher secondaryports.PasswordHasher,
-	sessionTokenGenerator secondaryports.SessionTokenGenerator,
+	crypto secondaryports.CryptoPort,
 	txManager secondaryports.TxManager,
 ) *AuthService {
 	return &AuthService{
-		owners:                owners,
-		ownerSessions:         ownerSessions,
-		passwordHasher:        passwordHasher,
-		sessionTokenGenerator: sessionTokenGenerator,
-		txManager:             txManager,
+		owners:        owners,
+		ownerSessions: ownerSessions,
+		crypto:        crypto,
+		txManager:     txManager,
 	}
 }
 
@@ -62,7 +57,7 @@ func (s *AuthService) Setup(ctx context.Context, input primaryports.SetupInput) 
 			return fmt.Errorf("check existing owner: %w", err)
 		}
 
-		passwordHash, err := s.passwordHasher.HashPassword(txCtx, input.Password)
+		passwordHash, err := s.crypto.HashPassword(txCtx, input.Password)
 		if err != nil {
 			return fmt.Errorf("hash setup password: %w", err)
 		}
@@ -97,14 +92,14 @@ func (s *AuthService) Login(ctx context.Context, input primaryports.LoginInput) 
 			return fmt.Errorf("get owner for login: %w", err)
 		}
 
-		if err := s.passwordHasher.ComparePassword(txCtx, owner.PasswordHash, input.Password); err != nil {
+		if err := s.crypto.ComparePassword(txCtx, owner.PasswordHash, input.Password); err != nil {
 			if errors.Is(err, secondaryports.ErrInvalidPassword) {
 				return ErrAuthFailed
 			}
 			return fmt.Errorf("compare owner password: %w", err)
 		}
 
-		token, err := s.sessionTokenGenerator.GenerateSessionToken(txCtx)
+		token, err := s.crypto.GenerateSessionToken(txCtx)
 		if err != nil {
 			return fmt.Errorf("generate owner session token: %w", err)
 		}
@@ -139,7 +134,7 @@ func (s *AuthService) Logout(ctx context.Context, input primaryports.LogoutInput
 		return err
 	}
 
-	tokenHash := hashSessionToken(input.SessionToken)
+	tokenHash := s.crypto.HashSessionToken(input.SessionToken)
 	err := s.txManager.RunInTx(ctx, func(txCtx context.Context) error {
 		err := s.ownerSessions.Revoke(txCtx, tokenHash)
 		if errors.Is(err, secondaryports.ErrNotFound) {
@@ -179,11 +174,6 @@ func validateLogoutInput(input primaryports.LogoutInput) error {
 		return fmt.Errorf("%w: session token is required", ErrValidation)
 	}
 	return nil
-}
-
-func hashSessionToken(token string) string {
-	digest := sha256.Sum256([]byte(strings.TrimSpace(token)))
-	return hex.EncodeToString(digest[:])
 }
 
 func optionalString(value string) *string {

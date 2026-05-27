@@ -3,9 +3,7 @@ package crypto
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 
 	secondaryports "github.com/nlypage/applycation/backend/internal/ports/secondary"
@@ -34,10 +32,8 @@ func (g *SessionTokenGenerator) GenerateSessionToken(ctx context.Context) (secon
 	}
 
 	value := base64.RawURLEncoding.EncodeToString(raw)
-	hash := sha256.Sum256([]byte(value))
-
 	return secondaryports.SessionToken{
 		Value: value,
-		Hash:  hex.EncodeToString(hash[:]),
+		Hash:  hashSessionToken(value),
 	}, nil
 }

@@ -108,22 +108,6 @@ description = "Generate backend code and tidy Go modules"
 hide = true
 run = ["mise run codegen", "cd backend && go mod tidy"]
 
-# Backward-compatible aliases for older CI/scripts.
-[tasks."backend:deps"]
-description = "Deprecated: use backend:tidy"
-hide = true
-run = "mise run backend:tidy"
-
-[tasks."backend:lint:check"]
-description = "Deprecated: use backend:lint"
-hide = true
-run = "mise run backend:lint"
-
-[tasks."backend:test:check"]
-description = "Deprecated: use backend:test"
-hide = true
-run = "mise run backend:test"
-
 # Frontend
 [tasks."frontend:dev"]
 description = "Run frontend dev server"
